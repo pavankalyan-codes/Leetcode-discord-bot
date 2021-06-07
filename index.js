@@ -1,11 +1,23 @@
 const Discord = require("discord.js");
-const fs = require("fs");
 const client = new Discord.Client();
-var lineReader = require("line-reader");
 const axios = require("axios");
 if (process.env.NODE_ENV !== "production") {
     require("dotenv").config();
 }
+
+var firebase = require("firebase");
+const firebaseConfig = {
+    apiKey: process.env.apiKey,
+    authDomain: process.env.authDomain,
+    projectId: process.env.projectId,
+    storageBucket: process.env.storageBucket,
+    messagingSenderId: process.env.messagingSenderId,
+    appId: process.env.appId,
+    measurementId: process.env.measurementId,
+};
+
+firebase.initializeApp(firebaseConfig);
+const database = firebase.database();
 
 const numberMatch = [
     "0️⃣",
@@ -33,28 +45,33 @@ function numberToEmoji(number) {
 
 async function userExist(name) {
     return new Promise(function(resolve, reject) {
-        // after some calculation
-        fs.readFile("data.txt", "utf-8", (err, file) => {
-            const lines = file.split("\n");
-            for (let line of lines) {
-                if (line === name) resolve(true);
+        database.ref().once("value", function(snapshot) {
+            if (snapshot.hasChild(name)) {
+                resolve(true);
+            } else {
+                resolve(false);
             }
-            resolve(false);
         });
     });
 }
 
 async function getNames() {
     return new Promise(function(resolve, reject) {
-        // after some calculation
-        list = [];
-        fs.readFile("data.txt", "utf-8", (err, file) => {
-            const lines = file.split("\n");
-            for (let line of lines) {
-                if (line != "") list.push(line);
+        profiles = [];
+        database.ref().once(
+            "value",
+            (snapshot) => {
+                let data = snapshot.val();
+                Object.keys(data).forEach((key) => {
+                    profiles.push(key);
+                });
+                console.log(profiles);
+                resolve(profiles);
+            },
+            (errorObject) => {
+                resolve("error occured");
             }
-            resolve(list);
-        });
+        );
     });
 }
 
@@ -120,22 +137,25 @@ client.on("message", async function(message) {
                     if (exist) {
                         message.reply("User already exist!");
                     } else {
-                        fs.appendFile("data.txt", data + "\n", function(err) {
-                            if (err) throw err;
-                            message.reply("User Added successfully!");
+                        database.ref(data).set({ status: 1 }, function(error) {
+                            if (error) {
+                                // The write failed...
+                                message.reply("Could not add Uer!");
+                            } else {
+                                // The write was successful...
+                                message.reply("User Added successfully!");
+                            }
                         });
                     }
                 }
             }
             if (subCommand === "list") {
-                fs.readFile("data.txt", "utf-8", (err, file) => {
-                    const lines = file.split("\n");
-                    let name = "\n";
-                    for (let line of lines) {
-                        if (line !== "") name += line + "\n";
-                    }
-                    message.reply(name);
-                });
+                let profiles = await getNames();
+                let list = "";
+                for (let profile of profiles) {
+                    list += "\n" + profile;
+                }
+                message.reply(list);
             }
             if (subCommand === "leaderboard") {
                 let profiles = await getNames();
