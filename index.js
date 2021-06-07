@@ -65,7 +65,7 @@ async function getNames() {
                 Object.keys(data).forEach((key) => {
                     profiles.push(key);
                 });
-                console.log(profiles);
+
                 resolve(profiles);
             },
             (errorObject) => {
