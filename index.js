@@ -3,7 +3,9 @@ const fs = require("fs");
 const client = new Discord.Client();
 var lineReader = require("line-reader");
 const axios = require("axios");
-require("dotenv").config();
+if (process.env.NODE_ENV !== "production") {
+    require("dotenv").config();
+}
 
 const numberMatch = [
     "0️⃣",
