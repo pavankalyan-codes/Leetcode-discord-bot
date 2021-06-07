@@ -1,0 +1,27 @@
+{
+    "name": "leetcode-discord-bot",
+    "version": "1.0.0",
+    "description": "",
+    "main": "index.js",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/pavankalyan-codes/Leetcode-discord-bot.git"
+    },
+    "author": "",
+    "license": "ISC",
+    "bugs": {
+        "url": "https://github.com/pavankalyan-codes/Leetcode-discord-bot/issues"
+    },
+    "homepage": "https://github.com/pavankalyan-codes/Leetcode-discord-bot#readme",
+    "dependencies": {
+        "axios": "^0.21.1",
+        "discord.js": "^12.5.3",
+        "line-reader": "^0.4.0"
+    },
+    "devDependencies": {
+        "dotenv": "^10.0.0"
+    }
+}
