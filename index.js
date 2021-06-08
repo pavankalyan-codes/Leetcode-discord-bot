@@ -67,7 +67,7 @@ async function getSubmission(name) {
                 let dateKey = (
                     new Date(new Date().toISOString().slice(0, 10) + " 05:30:00") / 1000
                 ).toFixed(0);
-                console.log(DateKey);
+                console.log(dateKey);
                 let submissionsObj = JSON.parse(
                     res.data.data.matchedUser.submissionCalendar
                 );
@@ -78,6 +78,7 @@ async function getSubmission(name) {
                 }
             })
             .catch((error) => {
+                console.log(error);
                 return resolve("could not fetch user");
             });
     });
