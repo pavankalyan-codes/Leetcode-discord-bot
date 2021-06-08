@@ -55,6 +55,33 @@ async function userExist(name) {
     });
 }
 
+async function getSubmission(name) {
+    return new Promise(function(resolve, reject) {
+        axios
+            .post("https://leetcode.com/graphql", getQuery(name), {
+                headers: {
+                    "Content-Type": "application/json",
+                },
+            })
+            .then((res) => {
+                let dateKey = (
+                    new Date(new Date().toISOString().slice(0, 10) + " 05:30:00") / 1000
+                ).toFixed(0);
+                let submissionsObj = JSON.parse(
+                    res.data.data.matchedUser.submissionCalendar
+                );
+                if (dateKey in submissionsObj) {
+                    resolve(submissionsObj[dateKey]);
+                } else {
+                    resolve(0);
+                }
+            })
+            .catch((error) => {
+                return resolve("could not fetch user");
+            });
+    });
+}
+
 async function getNames() {
     return new Promise(function(resolve, reject) {
         profiles = [];
@@ -113,13 +140,26 @@ client.on("message", async function(message) {
     let command = msg.split(" ")[0];
     let subCommand = msg.split(" ")[1];
     let data = msg.split(" ")[2];
-    if (command === "$chitti") {
+    if (command === "/chitti") {
         if (subCommand) {
             if (subCommand === "count") {
                 if (!data) return;
 
                 let solvedCount = await getCount(data);
                 message.reply(solvedCount);
+            }
+            if (subCommand === "remove") {
+                if (message.author.id === process.env.modToken) {
+                    if (!data) return;
+                    else {
+                        database.ref(data).remove();
+                        message.reply(
+                            "Removed user " + data + " Successfully! :police_officer:"
+                        );
+                    }
+                } else {
+                    message.reply("Only moderators can remove :toolbox: ");
+                }
             }
             if (subCommand === "add") {
                 if (!data) return;
@@ -157,7 +197,51 @@ client.on("message", async function(message) {
                 }
                 message.reply(list);
             }
-            if (subCommand === "leaderboard") {
+            if (subCommand === "submissions" || subCommand === "sm") {
+                if (!data) {
+                    let profiles = await getNames();
+                    let lb = "";
+                    let submissionList = [];
+                    var promises = [];
+                    for (profile of profiles) {
+                        promises.push(getSubmission(profile));
+                    }
+                    let index = 0;
+                    Promise.all(promises)
+                        .then(function(data) {
+                            for (let i = 0; i < data.length; i++) {
+                                submissionList.push({
+                                    subCount: data[i],
+                                    profile: profiles[i],
+                                });
+                            }
+                            submissionList.sort((a, b) => {
+                                return b.subCount - a.subCount;
+                            });
+                            let rank = 1;
+                            let last = null;
+                            for (let i = 0; i < submissionList.length; i++) {
+                                if (last != null && last != submissionList[i].subCount) rank++;
+                                lb =
+                                    lb +
+                                    "\n" +
+                                    (numberToEmoji(rank) +
+                                        "  " +
+                                        submissionList[i].profile +
+                                        " :right_facing_fist: " +
+                                        submissionList[i].subCount);
+                                last = submissionList[i].subCount;
+                            }
+                            message.reply(lb);
+                        })
+                        .catch(function(err) {});
+                } else {
+                    let count = await getSubmission(data);
+                    message.reply(count);
+                }
+            }
+            if (subCommand === "leaderboard" || subCommand === "lb") {
+                console.log("im here");
                 let profiles = await getNames();
                 let lb = "";
                 let nameCountList = [];
