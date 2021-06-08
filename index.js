@@ -1,6 +1,7 @@
 const Discord = require("discord.js");
 const client = new Discord.Client();
 const axios = require("axios");
+const joke = require("./joke.js");
 if (process.env.NODE_ENV !== "production") {
     require("dotenv").config();
 }
@@ -149,6 +150,11 @@ client.on("message", async function(message) {
                 let solvedCount = await getCount(data);
                 message.reply(solvedCount);
             }
+            if (subCommand === "joke") {
+                let random_joke = await joke.getJoke();
+                message.reply(random_joke);
+            }
+
             if (subCommand === "remove") {
                 if (message.author.id === process.env.modToken) {
                     if (!data) return;
