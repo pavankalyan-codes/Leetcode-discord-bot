@@ -241,7 +241,6 @@ client.on("message", async function(message) {
                 }
             }
             if (subCommand === "leaderboard" || subCommand === "lb") {
-                console.log("im here");
                 let profiles = await getNames();
                 let lb = "";
                 let nameCountList = [];
