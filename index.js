@@ -140,34 +140,33 @@ client.on("message", async function(message) {
     if (command === "/chitti") {
         if (subCommand) {
             if (subCommand === "count") {
-                if (!data) return;
+                if (!data) {
+                    message.reply(constants.botCommands);
+                    return;
+                }
 
                 let solvedCount = await getCount(data);
                 message.reply(solvedCount);
-            }
-            if (subCommand === "joke") {
+            } else if (subCommand === "joke") {
                 let random_joke = await joke.getJoke();
                 message.reply(random_joke);
-            }
-            if (subCommand === "w" || subCommand === "weather") {
-                if (!data) return;
-                else {
+            } else if (subCommand === "w" || subCommand === "weather") {
+                if (!data) {
+                    message.reply(constants.botCommands);
+                    return;
+                } else {
                     let weatherData = await weather.getWeather(data);
                     if (weatherData) {
                         message.reply(weatherData);
                     } else {
                         message.reply("Oops.. City not found!!! :(");
                     }
-                    console.log(weatherData);
                 }
-            }
-            if (subCommand === "meme") {
+            } else if (subCommand === "meme") {
                 let random_meme = await meme.getMeme();
                 const attachment = new MessageAttachment(random_meme);
                 message.channel.send(attachment);
-            }
-
-            if (subCommand === "remove") {
+            } else if (subCommand === "remove") {
                 if (message.author.id === process.env.modToken) {
                     if (!data) return;
                     else {
@@ -179,9 +178,11 @@ client.on("message", async function(message) {
                 } else {
                     message.reply("Only moderators can remove :toolbox: ");
                 }
-            }
-            if (subCommand === "add") {
-                if (!data) return;
+            } else if (subCommand === "add") {
+                if (!data) {
+                    message.reply(constants.botCommands);
+                    return;
+                }
                 let count = await getCount(data);
                 if (!isValidUser(count)) {
                     message.reply(
@@ -207,16 +208,14 @@ client.on("message", async function(message) {
                         });
                     }
                 }
-            }
-            if (subCommand === "list") {
+            } else if (subCommand === "list") {
                 let profiles = await getNames();
                 let list = "";
                 for (let profile of profiles) {
                     list += "\n" + profile;
                 }
                 message.reply(list);
-            }
-            if (subCommand === "submissions" || subCommand === "sm") {
+            } else if (subCommand === "submissions" || subCommand === "sm") {
                 if (!data) {
                     let profiles = await getNames();
                     let lb = "";
@@ -258,8 +257,7 @@ client.on("message", async function(message) {
                     let count = await getSubmission(data);
                     message.reply(count);
                 }
-            }
-            if (subCommand === "leaderboard" || subCommand === "lb") {
+            } else if (subCommand === "leaderboard" || subCommand === "lb") {
                 let profiles = await getNames();
                 let lb = "";
                 let nameCountList = [];
@@ -285,7 +283,11 @@ client.on("message", async function(message) {
                     last = nameCountList[i].currCount;
                 }
                 message.reply(lb);
+            } else {
+                message.reply(constants.botCommands);
             }
+        } else {
+            message.reply(constants.botCommands);
         }
     } else return;
 });
