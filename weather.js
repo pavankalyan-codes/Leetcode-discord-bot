@@ -11,7 +11,6 @@ let url =
 function getInEmojis(text) {
     let nums = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"];
     let result = "";
-    console.log(typeof text);
     for (let i = 0; i < text.length; i++) {
         if (nums.includes(text[i])) result += constants.numberMatch[text[i]] + " ";
         else result += text[i];

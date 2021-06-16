@@ -22,7 +22,6 @@ async function getSubmission(name) {
                 }
             })
             .catch((error) => {
-                console.log(error);
                 return resolve("could not fetch user");
             });
     });
