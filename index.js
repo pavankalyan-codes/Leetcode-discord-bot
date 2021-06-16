@@ -1,142 +1,24 @@
 const { Client, MessageAttachment } = require("discord.js");
 
-// Create an instance of a Discord client
 const client = new Client();
-const axios = require("axios");
 const joke = require("./joke.js");
 const meme = require("./meme.js");
 const weather = require("./weather.js");
 const constants = require("./constants.js");
-
+const leetcode = require("./leetcode.js");
+const utility = require("./utilities.js");
+const firebaseService = require("./firebaseService.js");
 if (process.env.NODE_ENV !== "production") {
     require("dotenv").config();
-}
-
-var firebase = require("firebase");
-const firebaseConfig = {
-    apiKey: process.env.apiKey,
-    authDomain: process.env.authDomain,
-    projectId: process.env.projectId,
-    storageBucket: process.env.storageBucket,
-    messagingSenderId: process.env.messagingSenderId,
-    appId: process.env.appId,
-    measurementId: process.env.measurementId,
-};
-
-firebase.initializeApp(firebaseConfig);
-const database = firebase.database();
-
-const numberMatch = constants.numberMatch;
-
-function numberToEmoji(number) {
-    let emoji = "";
-    let digit;
-    while (number > 0) {
-        digit = number % 10;
-        emoji = numberMatch[digit] + emoji;
-        number = Math.floor(number / 10);
-    }
-    return emoji;
-}
-
-async function userExist(name) {
-    return new Promise(function(resolve, reject) {
-        database.ref().once("value", function(snapshot) {
-            if (snapshot.hasChild(name)) {
-                resolve(true);
-            } else {
-                resolve(false);
-            }
-        });
-    });
-}
-
-async function getSubmission(name) {
-    return new Promise(function(resolve, reject) {
-        axios
-            .post("https://leetcode.com/graphql", getQuery(name), {
-                headers: {
-                    "Content-Type": "application/json",
-                },
-            })
-            .then((res) => {
-                let dateKey = (
-                    new Date(new Date().toISOString().slice(0, 10) + " 05:30:00") / 1000
-                ).toFixed(0);
-                let submissionsObj = JSON.parse(
-                    res.data.data.matchedUser.submissionCalendar
-                );
-                if (dateKey in submissionsObj) {
-                    resolve(submissionsObj[dateKey]);
-                } else {
-                    resolve(0);
-                }
-            })
-            .catch((error) => {
-                console.log(error);
-                return resolve("could not fetch user");
-            });
-    });
-}
-
-async function getNames() {
-    return new Promise(function(resolve, reject) {
-        profiles = [];
-        database.ref().once(
-            "value",
-            (snapshot) => {
-                let data = snapshot.val();
-                Object.keys(data).forEach((key) => {
-                    profiles.push(key);
-                });
-
-                resolve(profiles);
-            },
-            (errorObject) => {
-                resolve("error occured");
-            }
-        );
-    });
-}
-
-function getQuery(name) {
-    return {
-        operationName: "getUserProfile",
-        variables: {
-            username: name,
-        },
-        query: "query getUserProfile($username: String!) {\n  allQuestionsCount {\n    difficulty\n    count\n    __typename\n  }\n  matchedUser(username: $username) {\n    username\n    socialAccounts\n    githubUrl\n    contributions {\n      points\n      questionCount\n      testcaseCount\n      __typename\n    }\n    profile {\n      realName\n      websites\n      countryName\n      skillTags\n      company\n      school\n      starRating\n      aboutMe\n      userAvatar\n      reputation\n      ranking\n      __typename\n    }\n    submissionCalendar\n    submitStats {\n      acSubmissionNum {\n        difficulty\n        count\n        submissions\n        __typename\n      }\n      totalSubmissionNum {\n        difficulty\n        count\n        submissions\n        __typename\n      }\n      __typename\n    }\n    badges {\n      id\n      displayName\n      icon\n      creationDate\n      __typename\n    }\n    upcomingBadges {\n      name\n      icon\n      __typename\n    }\n    activeBadge {\n      id\n      __typename\n    }\n    __typename\n  }\n}\n",
-    };
-}
-
-async function getCount(name) {
-    return new Promise(function(resolve, reject) {
-        axios
-            .post("https://leetcode.com/graphql", getQuery(name), {
-                headers: {
-                    "Content-Type": "application/json",
-                },
-            })
-            .then((res) => {
-                resolve(res.data.data.matchedUser.submitStats.acSubmissionNum[0].count);
-            })
-            .catch((error) => {
-                return resolve("could not fetch user");
-            });
-    });
-}
-
-function isValidUser(text) {
-    return text !== "could not fetch user";
 }
 
 client.on("message", async function(message) {
     if (message.author.bot) return;
 
-    let msg = message.content.toLowerCase();
-    let command = msg.split(" ")[0];
-    let subCommand = msg.split(" ")[1];
-    let data = msg.split(" ")[2];
+    let msg = message.content.toLowerCase().split(" ");
+    let command = msg[0];
+    let subCommand = msg[1];
+    let data = msg[2];
     if (command === "/chitti") {
         if (subCommand) {
             if (subCommand === "count") {
@@ -145,7 +27,7 @@ client.on("message", async function(message) {
                     return;
                 }
 
-                let solvedCount = await getCount(data);
+                let solvedCount = await leetcode.getCount(data);
                 message.reply(solvedCount);
             } else if (subCommand === "joke") {
                 let random_joke = await joke.getJoke();
@@ -170,7 +52,7 @@ client.on("message", async function(message) {
                 if (message.author.id === process.env.modToken) {
                     if (!data) return;
                     else {
-                        database.ref(data).remove();
+                        firebaseService.database.ref(data).remove();
                         message.reply(
                             "Removed user " + data + " Successfully! :police_officer:"
                         );
@@ -183,8 +65,8 @@ client.on("message", async function(message) {
                     message.reply(constants.botCommands);
                     return;
                 }
-                let count = await getCount(data);
-                if (!isValidUser(count)) {
+                let count = await leetcode.getCount(data);
+                if (!utility.isValidUser(count)) {
                     message.reply(
                         "Could not fetch profile for this user :arrow_right: " +
                         data +
@@ -192,24 +74,24 @@ client.on("message", async function(message) {
                     );
                     return;
                 } else {
-                    let exist = await userExist(data);
+                    let exist = await firebaseService.userExist(data);
 
                     if (exist) {
                         message.reply("User already exist!");
                     } else {
-                        database.ref(data).set({ status: 1 }, function(error) {
-                            if (error) {
-                                // The write failed...
-                                message.reply("Could not add Uer!");
-                            } else {
-                                // The write was successful...
-                                message.reply("User Added successfully!");
-                            }
-                        });
+                        firebaseService.database
+                            .ref(data)
+                            .set({ status: 1 }, function(error) {
+                                if (error) {
+                                    message.reply("Could not add Uer!");
+                                } else {
+                                    message.reply("User Added successfully!");
+                                }
+                            });
                     }
                 }
             } else if (subCommand === "list") {
-                let profiles = await getNames();
+                let profiles = await firebaseService.getNames();
                 let list = "";
                 for (let profile of profiles) {
                     list += "\n" + profile;
@@ -217,12 +99,12 @@ client.on("message", async function(message) {
                 message.reply(list);
             } else if (subCommand === "submissions" || subCommand === "sm") {
                 if (!data) {
-                    let profiles = await getNames();
+                    let profiles = await firebaseService.getNames();
                     let lb = "";
                     let submissionList = [];
                     var promises = [];
                     for (profile of profiles) {
-                        promises.push(getSubmission(profile));
+                        promises.push(leetcode.getSubmission(profile));
                     }
                     let index = 0;
                     Promise.all(promises)
@@ -243,7 +125,7 @@ client.on("message", async function(message) {
                                 lb =
                                     lb +
                                     "\n" +
-                                    (numberToEmoji(rank) +
+                                    (utility.numberToEmoji(rank) +
                                         "  " +
                                         submissionList[i].profile +
                                         " :right_facing_fist: " +
@@ -254,15 +136,15 @@ client.on("message", async function(message) {
                         })
                         .catch(function(err) {});
                 } else {
-                    let count = await getSubmission(data);
+                    let count = await leetcode.getSubmission(data);
                     message.reply(count);
                 }
             } else if (subCommand === "leaderboard" || subCommand === "lb") {
-                let profiles = await getNames();
+                let profiles = await firebaseService.getNames();
                 let lb = "";
                 let nameCountList = [];
                 for (profile of profiles) {
-                    let currCount = await getCount(profile);
+                    let currCount = await leetcode.getCount(profile);
                     nameCountList.push({ currCount, profile });
                 }
                 nameCountList.sort((a, b) => {
@@ -275,7 +157,7 @@ client.on("message", async function(message) {
                     lb =
                         lb +
                         "\n" +
-                        (numberToEmoji(rank) +
+                        (utility.numberToEmoji(rank) +
                             "  " +
                             nameCountList[i].profile +
                             " :right_facing_fist: " +
