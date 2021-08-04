@@ -1,7 +1,7 @@
-    #Leetcode-stats bot
+## Contributing
 
-    Anyone can contribute to this bot.
+Pull requests are welcome. Please open an issue first to discuss what you would like to change.
 
-    features suggestions are welcomed. If you find any issue or bug feel free to raise an issue.
+## License
 
-    If you can fix it too, then make a Pull Request.
+[MIT](https://github.com/pavankalyan-codes/Leetcode-discord-bot/blob/main/LICENSE)
